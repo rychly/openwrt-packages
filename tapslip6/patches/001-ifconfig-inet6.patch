@@ -1,0 +1,14 @@
+--- a/tapslip6.c	2014-06-21 01:26:27.438746595 +0200
++++ b/tapslip6.c	2014-06-20 23:37:11.142940311 +0200
+@@ -287,9 +287,9 @@
+ 
+ 		      strcpy(&macs[9], &macs[15]);	// Elide two middle bytes.
+ 		      ssystem("ifconfig %s hw ether %s", tundev, macs);
+-		      ssystem("ifconfig %s inet6 up", tundev);
++		      ssystem("ifconfig %s up", tundev);
+ 		      if(ipaddr){
+-		      	ssystem("ifconfig %s inet6 add %s", tundev, ipaddr);
++		      	ssystem("ifconfig %s add %s", tundev, ipaddr);
+ 		      	ssystem("sysctl -w net.ipv6.conf.all.forwarding=1");
+ 		      }
+ 		      ssystem("ifconfig %s\n", tundev);
