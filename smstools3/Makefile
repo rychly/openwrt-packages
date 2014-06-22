@@ -41,11 +41,11 @@ endef
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		CC=$(TARGET_CC) \
-	USER_CFLAGS='$(TARGET_CFLAGS) $(EXTRA_CFLAGS) \
-		$(TARGET_CPPFLAGS) $(EXTRA_CPPFLAGS) \
-		-I$(STAGING_DIR)/usr/lib/libiconv-full/include' \
-	USER_LDFLAGS='$(TARGET_LDFLAGS) $(EXTRA_LDFLAGS) \
-		-L$(STAGING_DIR)/usr/lib/libiconv-full/lib'
+		USER_CFLAGS='$(TARGET_CFLAGS) $(EXTRA_CFLAGS) \
+			$(TARGET_CPPFLAGS) $(EXTRA_CPPFLAGS) \
+			-I$(STAGING_DIR)/usr/lib/libiconv-full/include' \
+		USER_LDFLAGS='$(TARGET_LDFLAGS) $(EXTRA_LDFLAGS) \
+			-L$(STAGING_DIR)/usr/lib/libiconv-full/lib'
 endef
 
 define Package/smstools3/install
