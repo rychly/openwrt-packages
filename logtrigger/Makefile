@@ -41,7 +41,7 @@ define Package/logtrigger/description
 	scripting language which enables you to automate tasks
 	in the infinity of time the event happens.
 	Sources:
-	https://github.com/bifferos/bb/blob/master/openwrt/package/feeds/xwrt/logtrigger/Makefile
+	https://code.google.com/p/x-wrt/source/browse/trunk/package/logtrigger/Makefile
 	https://forum.openwrt.org/viewtopic.php?pid=219768#p219768
 endef
 
