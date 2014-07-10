@@ -52,9 +52,11 @@ endef
 
 define Package/mail2sms/install
 	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_DIR) $(1)/usr/share/man/man1
 	$(INSTALL_DIR) $(1)/usr/share/man/man4
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/mail2sms $(1)/usr/bin/
+	$(INSTALL_DATA) ./files/mail2sms.conf $(1)/etc/
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/mail2sms.1 $(1)/usr/share/man/man1/
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/mail2sms.4 $(1)/usr/share/man/man4/
 endef
