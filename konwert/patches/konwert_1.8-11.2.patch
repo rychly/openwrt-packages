@@ -1,0 +1,1440 @@
+--- konwert-1.8.orig/konwert.conffiles
++++ konwert-1.8/konwert.conffiles
+@@ -0,0 +1 @@
++/etc/bash_completion.d/konwert
+--- konwert-1.8.orig/Makefile
++++ konwert-1.8/Makefile
+@@ -181,6 +181,9 @@
+ 
+ ###############################################################################
+ 
++$(srcbindir)/filterm: $(srcbindir)/filterm.cc
++	$(CXX) $(CXXFLAGS) $< -lutil -o $@
++
+ $(installbindir)/konwert: $(srcbindir)/konwert
+ 	sed 's|/usr/share/konwert/filters|$(filtersdir)|g' $< >$@
+ 	chmod +x $@
+--- konwert-1.8.orig/debian/copyright
++++ konwert-1.8/debian/copyright
+@@ -0,0 +1,8 @@
++This package was debianized by Yann Dirson <dirson@debian.org>,
++from sources available from:
++
++http://qrczak.ids.net.pl/programy/linux/konwert/
++
++Upstream author is Marcin 'Qrczak' Kowalczyk <qrczak@knm.org.pl>.
++
++Copyright: GPL (see /usr/share/common-licenses/GPL).
+--- konwert-1.8.orig/debian/rules
++++ konwert-1.8/debian/rules
+@@ -0,0 +1,112 @@
++#!/usr/bin/make -f
++# -*- makefile -*-
++# Made with the aid of dh_make, by Craig Small
++# Uses debhelper, GNU copyright 1997 by Joey Hess.
++# Some lines taken from debmake, by Cristoph Lameter.
++
++export LC_ALL=C
++
++topdir=$(shell pwd)
++debdir=${topdir}/debian
++tmpdir=${debdir}/tmp
++docdir=${debdir}/konwert-filters/usr/share/doc
++
++build: build-stamp
++build-stamp:
++	dh_testdir
++
++	chmod +x filters/UTF8-prn7pl
++	make CXXFLAGS="-O2 -g -Wall" prefix=/usr
++
++	touch build-stamp
++
++clean:
++	dh_testdir
++	dh_testroot
++	rm -f build-stamp
++
++	-${MAKE} clean
++
++	dh_clean
++
++install: build
++	dh_testdir
++	dh_testroot
++	dh_clean -k
++	dh_installdirs
++
++	${MAKE} install prefix=${tmpdir}/usr nofixmanconfig=1 \
++		mandir=${tmpdir}/usr/share/man
++
++	mkdir -p ${tmpdir}/usr/share/doc
++	mv ${tmpdir}/usr/doc/* ${tmpdir}/usr/share/doc/
++	rmdir ${tmpdir}/usr/doc
++
++	dh_movefiles
++
++#	cd debian/konwert-filters/usr/share/konwert/filters/ && \
++#	  mv 512bold 512bold1 ${tmpdir}/usr/share/konwert/filters
++
++	test -z "`find ${tmpdir} -not -type d | tee /dev/fd/2`" 
++
++binary-indep: install
++	dh_testdir -i
++	dh_testroot -i
++
++	cd ${debdir}/konwert-dev/usr/share/doc && \
++		ln -s konwert konwert-dev
++
++ # override hardlinks warnings
++	mkdir -p ${debdir}/konwert-filters/usr/share/lintian/overrides/
++	cp debian/lintian-override \
++	  ${debdir}/konwert-filters/usr/share/lintian/overrides/konwert-filters
++
++ # remove symlink to binary-arch filter (could be improved - is it worth ?)
++#	(cd ${debdir}/konwert-filters/usr/share/konwert/filters/ && \
++#	   ( test -L 512bold && rm 512bold ; \
++#	     test -L 512bold1 && rm 512bold1 ) )
++
++ # rename docdir
++	cd ${docdir} && mv konwert-* konwert-filters
++
++ # remove GPL and redundant files
++	cd ${docdir}/konwert-filters && rm */COPYING en/CHANGES pl/ZMIANY
++
++	dh_installdocs -pkonwert-filters
++	dh_installchangelogs -pkonwert-filters doc/en/CHANGES
++	dh_compress -i
++	dh_fixperms -i
++	dh_installdeb -i
++	dh_perl -i
++	dh_gencontrol -i
++	dh_md5sums -i
++	dh_builddeb -i
++
++binary-arch: install
++	dh_testdir -a
++	dh_testroot -a
++
++	install -d debian/konwert/etc/bash_completion.d/
++	install -m644 debian/konwert.bash-completion debian/konwert/etc/bash_completion.d/konwert
++
++ # what is this empy dir for ?
++#	rmdir ${tmpdir}/usr/lib/konwert/devel/
++
++	rm -rf ${tmpdir}/usr/share/doc/konwert-1.8
++	dh_installdocs -a
++	ln -s ../konwert-filters/en  ../konwert-filters/pl debian/konwert/usr/share/doc/konwert/
++	dh_buildinfo -a
++	dh_installchangelogs -a
++
++	dh_strip -a
++	dh_compress -a
++	dh_fixperms -a
++	dh_installdeb -a
++	dh_shlibdeps -a
++	dh_perl -a
++	dh_gencontrol -a
++	dh_md5sums -a
++	dh_builddeb -a
++
++binary: binary-indep binary-arch
++.PHONY: build clean binary-indep binary-arch binary
+--- konwert-1.8.orig/debian/konwert-filters.files
++++ konwert-1.8/debian/konwert-filters.files
+@@ -0,0 +1,3 @@
++usr/share/konwert/aux
++usr/share/konwert/filters
++usr/share/doc
+--- konwert-1.8.orig/debian/README.debian
++++ konwert-1.8/debian/README.debian
+@@ -0,0 +1,10 @@
++The Debian Package `konwert'
++----------------------------
++
++There are no shipped manpages in this version, but the 3 user-level
++programs (konvert, filterm, trs) are documented in English and Polish
++in the subdirs of this directory.
++
++These should surely be converted into manpages.
++
++Yann Dirson <dirson@debian.org>, Mon, 22 Jun 1998 09:19:36 +0200
+--- konwert-1.8.orig/debian/konwert.bash-completion
++++ konwert-1.8/debian/konwert.bash-completion
+@@ -0,0 +1,39 @@
++# Debian GNU/Linux konwert completion.
++# Copyright (c) 2003  Vitalij K. Lysoff <vij@ptc.spbu.ru>
++
++have konwert &&
++_konwert()
++{
++	local cur prev special i
++
++	COMPREPLY=()
++	cur=${COMP_WORDS[COMP_CWORD]}
++	prev=${COMP_WORDS[COMP_CWORD-1]}
++	filters=`ls /usr/share/konwert/filters/`
++	#filters="$COMP_CWORD "$filters
++
++	if [[ $COMP_CWORD > 1 ]]; then
++	    _filedir
++	    return 0
++	fi
++
++	case "$prev" in
++	    -o)
++ 		     _filedir
++		     return 0
++		     ;;
++	esac
++
++	if [[ "$cur" == -* ]]; then
++
++		COMPREPLY=( $( compgen -W '-o -O --help --version' -- $cur ) )
++	else
++
++		COMPREPLY=( $( compgen -W '$filters' -- $cur ) )
++
++	fi
++
++
++	return 0
++}
++[ -n "${have:-}" ] && complete -F _konwert $filenames konwert
+--- konwert-1.8.orig/debian/konwert.files
++++ konwert-1.8/debian/konwert.files
+@@ -0,0 +1,4 @@
++usr/bin
++usr/lib/konwert/aux/512*
++usr/share/konwert/filters/512*
++usr/share/man
+--- konwert-1.8.orig/debian/control
++++ konwert-1.8/debian/control
+@@ -0,0 +1,41 @@
++Source: konwert
++Section: text
++Priority: optional
++Maintainer: Yann Dirson <dirson@debian.org>
++Standards-Version: 3.6.2
++Build-Depends: debhelper (>> 5), dh-buildinfo
++
++Package: konwert
++Architecture: any
++Depends: ${shlibs:Depends}, ${perl:Depends}, ${misc:Depends}, konwert-filters
++Suggests: konwert-dev
++Description: Charset conversion for files or terminal I/O
++ `konwert' is yet another charset converter.  Some particular features are:
++  * one-to-many conversions
++  * context-dependent conversions
++  * approximations of some unavailable characters
++  * (as a result) ability to transcript e.g. Russian Cyrillic into Polish
++ phonetic equivalent
++ .
++ `filterm' applies filter conversion to a terminal's I/O, to get on-the-fly
++ charset conversion, and customized input methods.
++
++Package: konwert-filters
++Architecture: all
++Depends: ${perl:Depends}, ${misc:Depends}, libfile-temp-perl
++Recommends: konwert
++Description: Filters used by konwert for charset conversion
++ These files are needed by konwert.
++ .
++ They are also probably useless without konwert itself.
++
++Package: konwert-dev
++Architecture: all
++Priority: extra
++Depends: konwert, ${misc:Depends}
++Suggests: g++
++Description: Tools to define new charset conversion for konwert
++ This package contains sources for some filters, and the scripts used to
++ build those filters from them.
++ .
++ The `512bold' filter is a C++ program.
+--- konwert-1.8.orig/debian/konwert-dev.files
++++ konwert-1.8/debian/konwert-dev.files
+@@ -0,0 +1 @@
++usr/share/konwert/devel
+--- konwert-1.8.orig/debian/changelog
++++ konwert-1.8/debian/changelog
+@@ -0,0 +1,164 @@
++konwert (1.8-11.2) unstable; urgency=medium
++
++  * Non-maintainer upload.
++  * Use File::Temp in place of pid-based temporary filenames to prevent
++    against symlink-based attacks. (Closes: #496379)
++
++ -- Chris Lamb <chris@chris-lamb.co.uk>  Sat, 06 Sep 2008 17:15:01 +0100
++
++konwert (1.8-11.1) unstable; urgency=medium
++
++  * Non-maintainer upload.
++  * Fix FTBFS with GCC 4.3 (Closes: #413416).
++
++ -- Luk Claes <luk@debian.org>  Fri, 07 Mar 2008 18:54:25 +0000
++
++konwert (1.8-11) unstable; urgency=low
++
++  * Switch from debhelper v1 mode to v5:
++    * bash-completion script now maked as conffile (Closes: #358376).
++    * use ${misc:Depends} for every binary package.
++  * Fixed problem in a polish manpage (Closes: #296246).
++  * Fixed capitalization in README.Debian (lintian).
++  * Bumped Standards-Version to 3.6.2, no change.
++
++ -- Yann Dirson <dirson@debian.org>  Tue, 11 Apr 2006 01:22:10 +0200
++
++konwert (1.8-10) unstable; urgency=low
++
++  * Build with g++-4.0.
++
++ -- Yann Dirson <dirson@debian.org>  Tue,  5 Jul 2005 23:25:19 +0200
++
++konwert (1.8-9) unstable; urgency=low
++
++  * Fixed rtf-8bit to recognize the good escape sequences (Closes: #182439).
++  * Include bash-completion script for konwert(1) from Vitalij K. Lysoff.
++  * Fixed dh_buildinfo call to occur in binary-arch; ship a docdir in
++    konwert package instead of a symlink to allow this; create symlinks to
++    en and pl docdirs to leave docs easily found.  
++  * Reworked debian/rules a bit: added an install target to help
++    accomodating for this change.  
++  * Updated my email in README.Debian and copyright; updated upstream URL
++    in copyright.
++
++ -- Yann Dirson <dirson@debian.org>  Thu, 29 Apr 2004 00:30:26 +0200
++
++konwert (1.8-8) unstable; urgency=low
++
++  * Applied longstanding patch from Radovan Garabik to use UNIX98 ptys
++    (Closes: #108583, #195451).  Link filterm with libutil.
++  * Avoid redifinition of PATH_MAX in filterm.cc.
++  * Use dh-buildinfo.
++
++ -- Yann Dirson <dirson@debian.org>  Fri,  9 Jan 2004 16:31:57 +0100
++
++konwert (1.8-7) unstable; urgency=low
++
++  * Added support for mik from Kaloian Doganov (Closes: #196510).
++  * Added filters/UTF8-prn7pl and associated documentation from Grzegorz
++    B. Prokopski (Closes: #195908).
++  * Bumped Standards-Version from 3.0.1 to 3.5.10 (no change).
++
++ -- Yann Dirson <dirson@debian.org>  Sun,  8 Jun 2003 16:32:09 +0200
++
++konwert (1.8-6) unstable; urgency=low
++
++  * Converted bin/trc.cc to use <sstream> since g++ 3.3 dropped
++    <strstream.h> (Closes: #194942).
++  * Fixed konwert-filters short desc (lintian).
++
++ -- Yann Dirson <dirson@debian.org>  Thu, 29 May 2003 23:23:48 +0200
++
++konwert (1.8-5) unstable; urgency=low
++
++  * Rebuild for g++-3.2.
++  * Removed manually-inserted /usr/doc/-symlinks logic from maintainer
++    scripts.
++
++ -- Yann Dirson <dirson@debian.org>  Mon, 13 Jan 2003 16:03:50 +0100
++
++konwert (1.8-4) unstable; urgency=low
++
++  * Fix typos in package descriptions (Closes: #124848, #146488).  Ran
++    ispell and found a couple more.
++  * Added a lintian override for hardlinks usage.  Nothing forbids
++    hardlinks here, and they don't break anything.
++
++ -- Yann Dirson <dirson@debian.org>  Fri, 24 May 2002 00:55:17 +0200
++
++konwert (1.8-3) unstable; urgency=medium
++
++  * Include stdlib.h in trs.cc (Closes: #105180).
++  * Aknowledge previous NMU (Closes: #105304).
++  * Updated path to GPL in debian/copyright.
++
++ -- Yann Dirson <dirson@debian.org>  Wed,  1 Aug 2001 00:26:07 +0200
++
++konwert (1.8-2.1) unstable; urgency=low
++
++  * NMU
++  * Add build-depends header.  Closes: #105304
++
++ -- LaMont Jones <lamont@smallone.fc.hp.com>  Sat, 14 Jul 2001 22:52:34 -0600
++
++konwert (1.8-2) unstable; urgency=low
++
++  * Moved doc and man to /usr/share, as per FHS.
++  * Manually added handling of /usr/doc symlinks to konwert{,-dev}
++    packages.
++  * Changed the name of zmienna member in struct zmienna in trs.cc to
++    allow compilation.
++  * Bumped Standards-Version to 3.0.1.
++
++ -- Yann Dirson <dirson@debian.org>  Sun, 24 Oct 1999 19:32:48 +0200
++
++konwert (1.8-1) unstable; urgency=low
++
++  * New upstream release.
++  * Closes: Bug#38463 by recompilation.
++  * Make use of dh_perl for perl dependencies.
++
++ -- Yann Dirson <dirson@debian.org>  Tue,  6 Jul 1999 00:52:24 +0200
++
++konwert (1.7-3) frozen unstable; urgency=low
++
++  * Made konwert-filters to Recommend konwert because it is mostly
++    useless without the latter, and it makes an excuse for a lintian
++    override on "E: konwert-filters: trs-script-but-no-konwert-dep"
++    stuff.
++  * Recompiled against libstdc++-2.9 (Fixes: Bug#29044).
++  * Passed lintian 0.9.3 (well, with the restriction stated above...).
++
++ -- Yann Dirson <dirson@debian.org>  Thu, 12 Nov 1998 20:48:33 +0100
++
++konwert (1.7-2) unstable; urgency=low
++
++  * Incorporated patch from upstream to `512bold' filter so that
++    colors aren't reversed after dselect exists.
++
++ -- Yann Dirson <dirson@debian.org>  Fri, 31 Jul 1998 16:28:49 +0200
++
++konwert (1.7-1) unstable; urgency=low
++
++  * New upstream release:
++  * Install `CHANGES' as `changelog'.
++  * Passed lintian 0.6.0.
++
++ -- Yann Dirson <dirson@debian.org>  Fri, 24 Jul 1998 23:28:35 +0200
++
++konwert (1.6-1) unstable; urgency=low
++
++  * New upstream release:
++  ** Provides english manpages.
++  ** Uses /usr/share/ upstream.
++  ** Charset aliases.
++
++ -- Yann Dirson <dirson@debian.org>  Tue,  7 Jul 1998 21:42:02 +0200
++
++konwert (1.5-1) unstable; urgency=low
++
++  * Initial Release.
++  * Passed lintian 0.4.8.
++
++ -- Yann Dirson <dirson@debian.org>  Mon, 22 Jun 1998 09:19:36 +0200
+--- konwert-1.8.orig/debian/konwert-dev.dirs
++++ konwert-1.8/debian/konwert-dev.dirs
+@@ -0,0 +1 @@
++usr/share/doc
+--- konwert-1.8.orig/debian/compat
++++ konwert-1.8/debian/compat
+@@ -0,0 +1 @@
++5
+--- konwert-1.8.orig/debian/lintian-override
++++ konwert-1.8/debian/lintian-override
+@@ -0,0 +1 @@
++konwert-filters: package-contains-hardlink
+--- konwert-1.8.orig/debian/substvars
++++ konwert-1.8/debian/substvars
+@@ -0,0 +1,2 @@
++shlibs:Depends=libc6 (>= 2.3.2.ds1-21), libgcc1 (>= 1:4.0.0-7), libstdc++6 (>= 4.0.0-10)
++perl:Depends=perl
+--- konwert-1.8.orig/filters/rtf-8bit
++++ konwert-1.8/filters/rtf-8bit
+@@ -1,130 +1,130 @@
+ #!/usr/bin/trs -f
+ 
+-	'\\80	\x80
+-	'\\81	\x81
+-	'\\82	\x82
+-	'\\83	\x83
+-	'\\84	\x84
+-	'\\85	\x85
+-	'\\86	\x86
+-	'\\87	\x87
+-	'\\88	\x88
+-	'\\89	\x89
+-	'\\8a	\x8A
+-	'\\8b	\x8B
+-	'\\8c	\x8C
+-	'\\8d	\x8D
+-	'\\8e	\x8E
+-	'\\8f	\x8F
+-	'\\90	\x90
+-	'\\91	\x91
+-	'\\92	\x92
+-	'\\93	\x93
+-	'\\94	\x94
+-	'\\95	\x95
+-	'\\96	\x96
+-	'\\97	\x97
+-	'\\98	\x98
+-	'\\99	\x99
+-	'\\9a	\x9A
+-	'\\9b	\x9B
+-	'\\9c	\x9C
+-	'\\9d	\x9D
+-	'\\9e	\x9E
+-	'\\9f	\x9F
+-	'\\a0	\xA0
+-	'\\a1	\xA1
+-	'\\a2	\xA2
+-	'\\a3	\xA3
+-	'\\a4	\xA4
+-	'\\a5	\xA5
+-	'\\a6	\xA6
+-	'\\a7	\xA7
+-	'\\a8	\xA8
+-	'\\a9	\xA9
+-	'\\aa	\xAA
+-	'\\ab	\xAB
+-	'\\ac	\xAC
+-	'\\ad	\xAD
+-	'\\ae	\xAE
+-	'\\af	\xAF
+-	'\\b0	\xB0
+-	'\\b1	\xB1
+-	'\\b2	\xB2
+-	'\\b3	\xB3
+-	'\\b4	\xB4
+-	'\\b5	\xB5
+-	'\\b6	\xB6
+-	'\\b7	\xB7
+-	'\\b8	\xB8
+-	'\\b9	\xB9
+-	'\\ba	\xBA
+-	'\\bb	\xBB
+-	'\\bc	\xBC
+-	'\\bd	\xBD
+-	'\\be	\xBE
+-	'\\bf	\xBF
+-	'\\c0	\xC0
+-	'\\c1	\xC1
+-	'\\c2	\xC2
+-	'\\c3	\xC3
+-	'\\c4	\xC4
+-	'\\c5	\xC5
+-	'\\c6	\xC6
+-	'\\c7	\xC7
+-	'\\c8	\xC8
+-	'\\c9	\xC9
+-	'\\ca	\xCA
+-	'\\cb	\xCB
+-	'\\cc	\xCC
+-	'\\cd	\xCD
+-	'\\ce	\xCE
+-	'\\cf	\xCF
+-	'\\d0	\xD0
+-	'\\d1	\xD1
+-	'\\d2	\xD2
+-	'\\d3	\xD3
+-	'\\d4	\xD4
+-	'\\d5	\xD5
+-	'\\d6	\xD6
+-	'\\d7	\xD7
+-	'\\d8	\xD8
+-	'\\d9	\xD9
+-	'\\da	\xDA
+-	'\\db	\xDB
+-	'\\dc	\xDC
+-	'\\dd	\xDD
+-	'\\de	\xDE
+-	'\\df	\xDF
+-	'\\e0	\xE0
+-	'\\e1	\xE1
+-	'\\e2	\xE2
+-	'\\e3	\xE3
+-	'\\e4	\xE4
+-	'\\e5	\xE5
+-	'\\e6	\xE6
+-	'\\e7	\xE7
+-	'\\e8	\xE8
+-	'\\e9	\xE9
+-	'\\ea	\xEA
+-	'\\eb	\xEB
+-	'\\ec	\xEC
+-	'\\ed	\xED
+-	'\\ee	\xEE
+-	'\\ef	\xEF
+-	'\\f0	\xF0
+-	'\\f1	\xF1
+-	'\\f2	\xF2
+-	'\\f3	\xF3
+-	'\\f4	\xF4
+-	'\\f5	\xF5
+-	'\\f6	\xF6
+-	'\\f7	\xF7
+-	'\\f8	\xF8
+-	'\\f9	\xF9
+-	'\\fa	\xFA
+-	'\\fb	\xFB
+-	'\\fc	\xFC
+-	'\\fd	\xFD
+-	'\\fe	\xFE
+-	'\\ff	\xFF
++	\\'80	\x80
++	\\'81	\x81
++	\\'82	\x82
++	\\'83	\x83
++	\\'84	\x84
++	\\'85	\x85
++	\\'86	\x86
++	\\'87	\x87
++	\\'88	\x88
++	\\'89	\x89
++	\\'8a	\x8A
++	\\'8b	\x8B
++	\\'8c	\x8C
++	\\'8d	\x8D
++	\\'8e	\x8E
++	\\'8f	\x8F
++	\\'90	\x90
++	\\'91	\x91
++	\\'92	\x92
++	\\'93	\x93
++	\\'94	\x94
++	\\'95	\x95
++	\\'96	\x96
++	\\'97	\x97
++	\\'98	\x98
++	\\'99	\x99
++	\\'9a	\x9A
++	\\'9b	\x9B
++	\\'9c	\x9C
++	\\'9d	\x9D
++	\\'9e	\x9E
++	\\'9f	\x9F
++	\\'a0	\xA0
++	\\'a1	\xA1
++	\\'a2	\xA2
++	\\'a3	\xA3
++	\\'a4	\xA4
++	\\'a5	\xA5
++	\\'a6	\xA6
++	\\'a7	\xA7
++	\\'a8	\xA8
++	\\'a9	\xA9
++	\\'aa	\xAA
++	\\'ab	\xAB
++	\\'ac	\xAC
++	\\'ad	\xAD
++	\\'ae	\xAE
++	\\'af	\xAF
++	\\'b0	\xB0
++	\\'b1	\xB1
++	\\'b2	\xB2
++	\\'b3	\xB3
++	\\'b4	\xB4
++	\\'b5	\xB5
++	\\'b6	\xB6
++	\\'b7	\xB7
++	\\'b8	\xB8
++	\\'b9	\xB9
++	\\'ba	\xBA
++	\\'bb	\xBB
++	\\'bc	\xBC
++	\\'bd	\xBD
++	\\'be	\xBE
++	\\'bf	\xBF
++	\\'c0	\xC0
++	\\'c1	\xC1
++	\\'c2	\xC2
++	\\'c3	\xC3
++	\\'c4	\xC4
++	\\'c5	\xC5
++	\\'c6	\xC6
++	\\'c7	\xC7
++	\\'c8	\xC8
++	\\'c9	\xC9
++	\\'ca	\xCA
++	\\'cb	\xCB
++	\\'cc	\xCC
++	\\'cd	\xCD
++	\\'ce	\xCE
++	\\'cf	\xCF
++	\\'d0	\xD0
++	\\'d1	\xD1
++	\\'d2	\xD2
++	\\'d3	\xD3
++	\\'d4	\xD4
++	\\'d5	\xD5
++	\\'d6	\xD6
++	\\'d7	\xD7
++	\\'d8	\xD8
++	\\'d9	\xD9
++	\\'da	\xDA
++	\\'db	\xDB
++	\\'dc	\xDC
++	\\'dd	\xDD
++	\\'de	\xDE
++	\\'df	\xDF
++	\\'e0	\xE0
++	\\'e1	\xE1
++	\\'e2	\xE2
++	\\'e3	\xE3
++	\\'e4	\xE4
++	\\'e5	\xE5
++	\\'e6	\xE6
++	\\'e7	\xE7
++	\\'e8	\xE8
++	\\'e9	\xE9
++	\\'ea	\xEA
++	\\'eb	\xEB
++	\\'ec	\xEC
++	\\'ed	\xED
++	\\'ee	\xEE
++	\\'ef	\xEF
++	\\'f0	\xF0
++	\\'f1	\xF1
++	\\'f2	\xF2
++	\\'f3	\xF3
++	\\'f4	\xF4
++	\\'f5	\xF5
++	\\'f6	\xF6
++	\\'f7	\xF7
++	\\'f8	\xF8
++	\\'f9	\xF9
++	\\'fa	\xFA
++	\\'fb	\xFB
++	\\'fc	\xFC
++	\\'fd	\xFD
++	\\'fe	\xFE
++	\\'ff	\xFF
+--- konwert-1.8.orig/filters/UTF8-mik
++++ konwert-1.8/filters/UTF8-mik
+@@ -0,0 +1,3 @@
++APPROX='
++' APPROX1='
++' REPLACE='?' "${0%/*}/../aux/UTF8-charset" -rf "${0%/*}/../aux/charsets/mik"
+--- konwert-1.8.orig/filters/any-UTF8
++++ konwert-1.8/filters/any-UTF8
+@@ -1,5 +1,7 @@
+ #!/usr/bin/perl
+ 
++use File::Temp qw(tempfile);
++
+ ($katalog = $0) =~ s|/[^/]*$||;
+ 
+ # Konwersja any-test wypisuje tylko oznaczenie rozpoznanego standardu zamiast
+@@ -61,8 +63,10 @@
+ 	# Musimy przelecieÊ tekst dwa razy - raz, øeby zliczyÊ znaki, i drugi
+ 	# raz, øeby go skonwertowaÊ. Podczas pierwszego przebiegu zapamiÍtujemy
+ 	# wiÍc test w tymczasowym pliku:
+-	open TEMP, "+>/tmp/any-$$";
+-	unlink "/tmp/any-$$";
++	($fh, $filename) = tempfile();
++	close $fh;
++	open TEMP, "+>$filename";
++	unlink $filename;
+ }
+ # Zliczamy wyst±pienia poszczegÛlnych bajtÛw (w @ile) i znakÛw d≥uøszych niø
+ # jeden bajt (w %ile):
+--- konwert-1.8.orig/filters/UTF8-prn7pl
++++ konwert-1.8/filters/UTF8-prn7pl
+@@ -0,0 +1,64 @@
++#!/bin/bash -
++#
++# Wykorzystuje standardowe mozliwosci drukarki zgodnej ze standardem
++# EPSON do emulacji polskich znaczkow. Dziala na zasadzie sekwencji:
++#
++# <literka_podstawowa><cofnij>[w gore/dol]<znaczek ,`.>[w dol/gore]
++#
++# Sekwencje zostaly przetestowane na starej 9-iglowej drukarce
++# Star NL-10 we wszystkich jakosciach/czcionkach na niej dostepnych,
++# a takze w trybie NLQ.
++#
++# Wersja domyslna z parametrem 'nlq' wyglada lepiej w lepszej jakosci
++# czy rozdzielczosci wydruku, natomiast 'draft' w gorszej/nizszej.
++#
++# (c) by Grzegorz B. Prokopski 2003 <gadek@debian.org> licencja GPL2
++#
++
++# rozpoznajemy parametry ARG: domyslny 'nlq' i 'draft'
++P_WAY=nlq
++for A in $ARG; do
++	case $A in
++		nlq) P_WAY=nlq;;
++		draft) P_WAY=draft;;
++	esac
++done
++
++# domyslnie ustawiamy zmienne dla DRAFTu
++P_MOGN=\\b\\e\\112\\004,\\e\\152\\004
++P_MAKC=\\b\\'`'
++P_MKRP=\\b\\e\\152\\021.\\e\\112\\021
++P_DOGN=\\b\\e\\112\\004,\\e\\152\\004
++P_DAKC=\\b\\e\\152\\010\\'`'\\e\\112\\010
++P_DKRP=\\b\\e\\152\\027.\\e\\112\\027
++P_UKN=\\b/
++
++# zmieniamy dla NLQ
++if [ $P_WAY == nlq ]; then
++P_MAKC=\\b\\e\\152\\025,\\e\\112\\025
++P_MKRP=\\b\\e\\152\\023.\\e\\112\\023
++P_DAKC=\\b\\e\\152\\033,\\e\\112\\033
++P_DKRP=\\b\\e\\152\\031.\\e\\112\\031
++fi
++
++trs -e "
++		ƒÖ		a$P_MOGN
++		ƒá		c$P_MAKC
++		ƒô		e$P_MOGN
++		≈Ç		l$P_UKN
++		≈Ñ		n$P_MAKC
++		√≥		o$P_MAKC
++		≈õ		s$P_MAKC
++		≈∫		z$P_MAKC
++		≈º		z$P_MKRP
++		ƒÑ		A$P_DOGN
++		ƒÜ		C$P_DAKC
++		ƒò		E$P_DOGN
++		≈Å		L$P_UKN
++		≈É		N$P_DAKC
++		√ì		O$P_DAKC
++		≈ö		S$P_DAKC
++		≈π		Z$P_DAKC
++		≈ª		Z$P_DKRP
++"
++
+--- konwert-1.8.orig/bin/512bold.cc
++++ konwert-1.8/bin/512bold.cc
+@@ -1,6 +1,6 @@
+ 
+ #include <stdlib.h>
+-#include <iostream.h>
++#include <iostream>
+ 
+ #define NPAR 16
+ 
+@@ -83,7 +83,7 @@
+     for (int i = 0; i < 8; i++)
+     	if (zmien[i])
+     	{
+-	    cout << "\33]P" << hex[i] << normalny[nastare[i]];
++	    std::cout << "\33]P" << hex[i] << normalny[nastare[i]];
+ 	    zmien[i] = 0;
+     	}
+     zmiencos = 0;
+@@ -93,7 +93,7 @@
+ {
+     int attr = color;
+     if (reverse) attr = (attr & 0x88) | (((attr >> 4) | (attr << 4)) & 0x77);
+-    cout << 30 + kolory
++    std::cout << 30 + kolory
+     (
+ 	(underline ? ulcolor :
+ 	intensity == 0 ? halfcolor :
+@@ -141,7 +141,7 @@
+ 	switch (par[i])
+ 	{
+ 	    case 0:	/* all attributes off */
+-		cout << "0;";
++		std::cout << "0;";
+ 		default_attr();
+ 		update_attr();
+ 		break;
+@@ -200,9 +200,9 @@
+ 		    update_attr();
+ 		}
+ 		else
+-		    cout << par[i];
++		    std::cout << par[i];
+ 	}
+-	if (i != npar) cout << ';';
++	if (i != npar) std::cout << ';';
+     }
+     npar = -1;
+ }
+@@ -218,7 +218,7 @@
+ 		if (underline)
+ 		{
+ 		    update_attr();
+-		    cout << "m\33[";
++		    std::cout << "m\33[";
+ 		}
+ 	    }
+ 	    break;
+@@ -229,7 +229,7 @@
+ 		if (intensity == 0)
+ 		{
+ 		    update_attr();
+-		    cout << "m\33[";
++		    std::cout << "m\33[";
+ 		}
+ 	    }
+ 	    break;
+@@ -240,21 +240,21 @@
+ 		intensity == 0 ? halfcolor :
+ 		(color & 0x0F)) ^ (intensity == 2) * 8
+ 	    ) | (color & 0xF0);
+-	    cout << 30 + (def_color & 0x07) << ';' << 40 + (def_color >> 4);
+-	    if (def_color & 0x08) cout << ";1";
+-	    cout << "m\33[8]\33[";
+-	    if (def_color & 0x08) cout << "22;";
++	    std::cout << 30 + (def_color & 0x07) << ';' << 40 + (def_color >> 4);
++	    if (def_color & 0x08) std::cout << ";1";
++	    std::cout << "m\33[8]\33[";
++	    if (def_color & 0x08) std::cout << "22;";
+ 	    default_attr();
+ 	    update_attr();
+-	    cout << 'm';
++	    std::cout << 'm';
+ 	    return;
+     }
+     for (int i = 0; i <= npar; i++)
+     {
+-	cout << par[i];
+-	if (i < npar) cout << ';';
++	std::cout << par[i];
++	if (i < npar) std::cout << ';';
+     }
+-    cout << ']';
++    std::cout << ']';
+ }
+ 
+ void con_write (unsigned char c)
+@@ -292,7 +292,7 @@
+ 			save_cur();
+ 			break;
+ 		    case '8':
+-		    	cout << "8\33[";
++		    	std::cout << "8\33[";
+ 			restore_cur();
+ 			c = 'm';
+ 			break;
+@@ -341,13 +341,13 @@
+ 		    }
+ 		    for (int i = 0; i <= npar; i++)
+ 		    {
+-			cout << par[i];
+-			if (i < npar) cout << ';';
++			std::cout << par[i];
++			if (i < npar) std::cout << ';';
+ 		    }
+ 		}
+         }
+     }
+-    cout << c;
++    std::cout << c;
+     if (zmiencos) update_pal();
+ }
+ 
+@@ -383,9 +383,9 @@
+ {
+     licz_odleglosci();
+     reset_terminal();
+-    cout << "\30\33]R\33[0;"; update_attr(); cout << "m";
++    std::cout << "\30\33]R\33[0;"; update_attr(); std::cout << "m";
+     update_pal();
+     int c;
+-    while ((c = cin.get()) != -1) con_write (c);
+-    cout << "\30\33]R\33[0m";
++    while ((c = std::cin.get()) != -1) con_write (c);
++    std::cout << "\30\33]R\33[0m";
+ }
+--- konwert-1.8.orig/bin/filterm.cc
++++ konwert-1.8/bin/filterm.cc
+@@ -1,4 +1,5 @@
+-#include <iostream.h>
++#include <iostream>
++#include <limits.h>
+ #include <signal.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -10,20 +11,20 @@
+ #include <sys/stat.h>
+ #include <sys/types.h>
+ #include <sys/wait.h>
++#include <pty.h>
+ 
+ #define WERSJA "1.8"
+ 
+ char		*nazwaprogramu;
+ char		*shell;
+ int		master;
+-int		slave;
++int		slave = -1;
+ struct termios	tt;
+ struct winsize	win;
+-char		line[] = "/dev/ptyXX";
+ 
+ void uzycie (int status)
+ {
+-    (status ? cerr : cout) << "\
++    (status ? std::cerr : std::cout) << "\
+ Usage: " << nazwaprogramu << " INPUT OUTPUT [COMMAND [ARGS]]\n\
+ Execute the specified COMMAND (default is the shell), filtering terminal\n\
+ input and/or output.\n\
+@@ -47,43 +48,38 @@
+ 
+ void wersja()
+ {
+-    cout << "\
++    std::cout << "\
+ filterm, version " WERSJA "\n\
+ Copyright 1998 Marcin Kowalczyk <qrczak@knm.org.pl>\n\
+ ";
+     exit (0);
+ }
+ 
+-void getmaster()
++static char linedata[PATH_MAX];
++char *line = linedata;
++
++int getpty(void) {
++    if (openpty(&master, &slave, line, NULL, NULL)) {
++        return -1;
++    } return master;
++}
++
++
++void getmasterslave()
+ {
+-    char *pty = &line[strlen ("/dev/ptyp")];
+-    for (char *bank = "pqrs"; *bank; bank++)
+-    {
+-	line[strlen ("/dev/pty")] = *bank;
+-	*pty = '0';
+-	struct stat stb;
+-	if (stat (line, &stb) < 0) break;
+-	for (char *cp = "0123456789abcdef"; *cp; cp++)
+-	{
+-	    *pty = *cp;
+-	    if ((master = open (line, O_RDWR)) >= 0)
+-	    {
+-		char *tp = &line[strlen("/dev/")];
+-		*tp = 't';
+-		int ok = !access (line, R_OK|W_OK);
+-		*tp = 'p';
+-		if (ok)
+-		{
+-		    tcgetattr (0, &tt);
+-		    ioctl (0, TIOCGWINSZ, (char *) &win);
+-		    return;
+-		}
+-		close (master);
+-	    }
+-	}
++    int r;
++    r = getpty();
++    if (r==-1) { 
++        std::cerr << "Error opening pty\n";
++        exit (1);
+     }
+-    cerr << "Out of pty's\n";
+-    exit (1);
++
++    tcgetattr (0, &tt);
++    ioctl (0, TIOCGWINSZ, (char *) &win);
++    tcsetattr (slave, TCSAFLUSH, &tt);
++    ioctl (slave, TIOCSWINSZ, (char *) &win);
++    setsid();
++    ioctl (slave, TIOCSCTTY, 0);
+ }
+ 
+ void terminalsurowy()
+@@ -114,24 +110,8 @@
+     exit (1);
+ }
+ 
+-void getslave()
+-{
+-    line[strlen ("/dev/")] = 't';
+-    slave = open (line, O_RDWR);
+-    if (slave < 0)
+-    {
+-	perror (line);
+-	exit (1);
+-    }
+-    tcsetattr (slave, TCSAFLUSH, &tt);
+-    ioctl (slave, TIOCSWINSZ, (char *) &win);
+-    setsid();
+-    ioctl (slave, TIOCSCTTY, 0);
+-}
+-
+ void komenda (int argc, char *argv[])
+ {
+-    getslave();
+     dup2 (slave, 0);
+     dup2 (slave, 1);
+     dup2 (slave, 2);
+@@ -181,7 +161,7 @@
+     }
+     if (argc < 3) uzycie (0);
+ 
+-    getmaster();
++    getmasterslave();
+     signal (SIGCHLD, koniec);
+ 
+     if (strcmp (argv[2], "-"))
+--- konwert-1.8.orig/bin/konwert
++++ konwert-1.8/bin/konwert
+@@ -1,5 +1,7 @@
+ #!/usr/bin/perl
+ 
++use File::Temp qw(tempfile);
++
+ ######## STA£E ################################################################
+ 
+ $wersja = "1.8";
+@@ -152,7 +154,8 @@
+     {
+ 	if ($wy eq "=")
+ 	{
+-	    $temp = "/tmp/konwert-$$";
++	    ($fh, $temp) = tempfile();
++	    close $fh;
+ 	    open STDOUT, ">$temp" or die "$ja: $temp: $!\n"
+ 	}
+ 	elsif (-d _)
+--- konwert-1.8.orig/bin/512bold1.cc
++++ konwert-1.8/bin/512bold1.cc
+@@ -1,5 +1,5 @@
+ 
+-#include <iostream.h>
++#include <iostream>
+ 
+ int kolory[2][8] = { { 0, 1, 2, 1, 4, 1, 2, 7 }, { 0, 5, 6, 6, 5, 5, 6, 3 } };
+ 
+@@ -15,7 +15,7 @@
+ 
+ void update_attr()
+ {
+-    cout << 30 + (underline ? ulcolor : intensity == 0 ? halfcolor :
++    std::cout << 30 + (underline ? ulcolor : intensity == 0 ? halfcolor :
+ 	kolory[intensity == 2][color & 0x0F])
+ 	<< ';' << 40 + kolory[0][color >> 4];
+ }
+@@ -54,7 +54,7 @@
+ 	switch (par[i])
+ 	{
+ 	    case 0:	/* all attributes off */
+-		cout << "0;";
++		std::cout << "0;";
+ 		default_attr();
+ 		update_attr();
+ 		break;
+@@ -105,9 +105,9 @@
+ 		    update_attr();
+ 		}
+ 		else
+-		    cout << par[i];
++		    std::cout << par[i];
+ 	}
+-	if (i != npar) cout << ';';
++	if (i != npar) std::cout << ';';
+     }
+     npar = -1;
+ }
+@@ -191,25 +191,25 @@
+ 		    }
+ 		    for (int i = 0; i <= npar; i++)
+ 		    {
+-			cout << par[i];
+-			if (i < npar) cout << ';';
++			std::cout << par[i];
++			if (i < npar) std::cout << ';';
+ 		    }
+ 		}
+         }
+     }
+-    cout << c;
++    std::cout << c;
+ }
+ 
+ main()
+ {
+     reset_terminal();
+-    cout << "\33]P0000000\33]P1AA0000\33]P200AA00\33]P3FFFFFF"
++    std::cout << "\33]P0000000\33]P1AA0000\33]P200AA00\33]P3FFFFFF"
+ 	    "\33]P40000AA\33]P5FF55FF\33]P655FFFF\33]P7AAAAAA"
+ 	    "\33]P8000000\33]P9AA0000\33]PA00AA00\33]PBFFFFFF"
+ 	    "\33]PC0000AA\33]PDFF55FF\33]PE55FFFF\33]PFAAAAAA"
+ 	    "\33[0;";
+-    update_attr(); cout << "m";
++    update_attr(); std::cout << "m";
+     int c;
+-    while ((c = cin.get()) != -1) con_write (c);
+-    cout << "\33]R\33[0m";
++    while ((c = std::cin.get()) != -1) con_write (c);
++    std::cout << "\33]R\33[0m";
+ }
+--- konwert-1.8.orig/bin/trs.cc
++++ konwert-1.8/bin/trs.cc
+@@ -8,13 +8,16 @@
+ //      ^^      http://qrczak.home.ml.org/
+ 
+ #include <string.h>
+-#include <iostream.h>
+-#include <fstream.h>
+-#include <strstream.h>
++#include <iostream>
++#include <fstream>
++#include <sstream>
+ #include <ctype.h>
+ #include <unistd.h>
++#include <stdlib.h>
+ #define _(String) (String)
+ 
++using namespace std;
++
+ #define WERSJA "1.8"
+ #define WLKSLOWA 64*1024	// Maksymalna d≥ugo∂Ê s≥owa do zamiany
+ 				// albo s≥owa, na ktÛre zamieniamy
+@@ -133,7 +136,7 @@
+ 
+ struct zmienna
+ {
+-	int zmienna, wartosc;
++	int zmienna2, wartosc;
+ 	zmienna *nast;
+ };
+ 
+@@ -315,7 +318,7 @@
+ 					)
+ 					{
+ 						*zmienne = new zmienna;
+-						(*zmienne)->zmienna =
++						(*zmienne)->zmienna2 =
+ 							s1[0] >= 'A' && s1[0] <= 'Z' ?
+ 								s1[0] - 'A'
+ 							:
+@@ -474,7 +477,7 @@
+ 
+ void regulyzarg (char *s)
+ {
+-	istrstream f (s);
++	istringstream f (s);
+ 	czytajreguly (f);
+ }
+ 
+@@ -542,7 +545,7 @@
+ 					zmienna *z = r->warunki;
+ 					while (z)
+ 					{
+-						if (zmienne[z->zmienna] != z->wartosc)
++						if (zmienne[z->zmienna2] != z->wartosc)
+ 							goto niepasuje;
+ 						z = z->nast;
+ 					}
+@@ -572,7 +575,7 @@
+ 					z = r->zmienne;
+ 					while (z)
+ 					{
+-						zmienne[z->zmienna] = z->wartosc;
++						zmienne[z->zmienna2] = z->wartosc;
+ 						z = z->nast;
+ 					}
+ 					goto zamienione;
+--- konwert-1.8.orig/aux/charsets/mik
++++ konwert-1.8/aux/charsets/mik
+@@ -0,0 +1,129 @@
++	~	~
++	Ä	–ê
++	Å	–ë
++	Ç	–í
++	É	–ì
++	Ñ	–î
++	Ö	–ï
++	Ü	–ñ
++	á	–ó
++	à	–ò
++	â	–ô
++	ä	–ö
++	ã	–õ
++	å	–ú
++	ç	–ù
++	é	–û
++	è	–ü
++	ê	–†
++	ë	–°
++	í	–¢
++	ì	–£
++	î	–§
++	ï	–•
++	ñ	–¶
++	ó	–ß
++	ò	–®
++	ô	–©
++	ö	–™
++	õ	–´
++	ú	–¨
++	ù	–≠
++	û	–Æ
++	ü	–Ø
++	†	–∞
++	°	–±
++	¢	–≤
++	£	–≥
++	§	–¥
++	•	–µ
++	¶	–∂
++	ß	–∑
++	®	–∏
++	©	–π
++	™	–∫
++	´	–ª
++	¨	–º
++	≠	–Ω
++	Æ	–æ
++	Ø	–ø
++	∞	—Ä
++	±	—Å
++	≤	—Ç
++	≥	—É
++	¥	—Ñ
++	µ	—Ö
++	∂	—Ü
++	∑	—á
++	∏	—à
++	π	—â
++	∫	—ä
++	ª	—ã
++	º	—å
++	Ω	—ç
++	æ	—é
++	ø	—è
++	¿	‚îî
++	¡	‚î¥
++	¬	‚î¨
++	√	‚îú
++	ƒ	‚îÄ
++	≈	‚îº
++	∆	‚ï£
++	«	‚ïë
++	»	‚ïö
++	…	‚ïî
++	 	‚ï©
++	À	‚ï¶
++	Ã	‚ï†
++	Õ	‚ïê
++	Œ	‚ï¨
++	œ	‚îê
++	–	‚ñë
++	—	‚ñí
++	“	‚ñì
++	”	‚îÇ
++	‘	‚î§
++	’	‚Ññ
++	÷	¬ß
++	◊	‚ïó
++	ÿ	‚ïù
++	Ÿ	‚îò
++	⁄	‚îå
++	€	‚ñà
++	‹	‚ñÑ
++	›	‚ñå
++	ﬁ	‚ñê
++	ﬂ	‚ñÄ
++	‡	Œ±
++	·	Œ≤
++	‚	Œì
++	„	œÄ
++	‰	Œ£
++	Â	œÉ
++	Ê	Œº
++	Á	œÑ
++	Ë	Œ¶
++	È	Œò
++	Í	Œ©
++	Î	Œ¥
++	Ï	‚àû
++	Ì	‚àÖ
++	Ó	‚àà
++	Ô	‚à©
++		‚â°
++	Ò	¬±
++	Ú	‚â•
++	Û	‚â§
++	Ù	‚å†
++	ı	‚å°
++	ˆ	√∑
++	˜	‚âà
++	¯	¬∞
++	˘	‚àô
++	˙	¬∑
++	˚	‚àö
++	¸	‚Åø
++	˝	¬≤
++	˛	‚ñ†
++	ˇ	¬†
+--- konwert-1.8.orig/doc/en/filters
++++ konwert-1.8/doc/en/filters
+@@ -194,6 +194,12 @@
+ 
+ toupper, tolower - Self-explanatory. Currently ASCII only.
+ 
++prn7pl - Converts polish chars to control sequences for EPSON-compatible
++printer. Using only 7-bit chars, backspacing printer's head and vertical
++positioning chars ,.'` it creates pseudo-polish gryphs. You can specify
++options: /nlq (default) which optimalizes output for better quality
++printers and /draft - useful for ex. for 9-nails printer.
++
+ 
+ 	ADDITIONAL FILTERS FOR FILTERM
+ 
+--- konwert-1.8.orig/doc/pl/filtry
++++ konwert-1.8/doc/pl/filtry
+@@ -200,6 +200,12 @@
+ toupper, tolower - Zamienia tekst na duøe / ma≥e litery. Na razie tylko
+ ASCII.
+ 
++prn7pl - Konwertuje polskie znaki na sekwencje sterujÍce drukarki zgodnej
++z EPSON wykorzystuj±c jedynie podstawowe znaki 7-bitowe, cofaj±c g≥owicÍ
++drukarki i drukuj±c na odpowiedniej wysoko∂ci ,.'` daj±ce w sumie pseudo-
++polskie znaki. Przyjmuje opcje: /nlq (domy∂lne) optymalizowane do drukarek
++o lepszej rozdzielczo∂ci i /draft - np. dla trybu draft 9-ig≥Ûwki.
++
+ 
+ 	DODATKOWE FILTRY DLA FILTERMA
+ 
+--- konwert-1.8.orig/man/man1/konwert.1
++++ konwert-1.8/man/man1/konwert.1
+@@ -533,6 +533,17 @@
+ .B tolower
+ .PD
+ Self-explanatory. Currently ASCII only.
++.TP
++.B prn7pl
++Converts polish chars to control sequences for EPSON-compatible
++printer. Using only 7-bit chars, backspacing printer's head and vertical
++positioning chars ,.'` it creates pseudo-polish gryphs. You can specify
++options:
++.B /nlq
++(default) which optimalizes output for better quality
++printers and
++.B /draft
++- useful for ex. for 9-nails printer.
+ .SH FILES
+ .TP
+ .PD 0
+--- konwert-1.8.orig/man/pl/man1/konwert.1
++++ konwert-1.8/man/pl/man1/konwert.1
+@@ -52,7 +52,7 @@
+ .PP
+ .B konwert
+ .BI '( "KOMENDA ARG\fR.\|.\|.\|" )'
+-wykonuje dane polecenie szela. Jest to przydatne z opcjami
++wykonuje dane polecenie pow≥oki. Jest to przydatne z opcjami
+ .B \-o
+ albo
+ .BR \-O .
+@@ -531,6 +531,17 @@
+ .B tolower
+ .PD
+ Zamienia tekst na duøe / ma≥e litery. Na razie tylko ASCII.
++.TP
++.B prn7pl
++Konwertuje polskie znaki na sekwencje sterujÍce drukarki zgodnej
++z EPSON wykorzystuj±c jedynie podstawowe znaki 7-bitowe, cofaj±c g≥owicÍ
++drukarki i drukuj±c na odpowiedniej wysoko∂ci ,.'` daj±ce w sumie pseudo-
++polskie znaki. Przyjmuje opcje:
++.B /nlq
++(domy∂lne) optymalizowane do drukarek
++o lepszej rozdzielczo∂ci i
++.B /draft
++- np. dla trybu draft 9-ig≥Ûwki.
+ .SH PLIKI
+ .TP
+ .PD 0
