@@ -33,6 +33,7 @@ define Package/konwert
 	CATEGORY:=Utilities
 	TITLE:=Charset conversion for files or terminal I/O.
 	URL:=http://packages.qa.debian.org/konwert
+	DEPENDS:=+libstdcpp
 	MAINTAINER:=Marek Rychly <marek.rychly@gmail.com>
 endef
 
@@ -43,6 +44,11 @@ endef
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
+	find $(PKG_BUILD_DIR)/devel $(PKG_BUILD_DIR)/filters $(PKG_BUILD_DIR)/aux -type f -executable \
+	-exec sed -i \
+	-e '0,/^#!\/bin\/bash/s||#!/bin/ash|' \
+	-e 's|\$$$${!VARIANT}|$$$${VARIANT}|g' \
+	\{\} \;
 endef
 
 define Package/konwert/install

@@ -1,54 +1,51 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2006 OpenWrt.org
-# smsd initscript openwrt mod
+# Copyright (C) 2006-2014 OpenWrt.org
 
 START=99
 STOP=99
 
-EXTRA_COMMANDS="status"
-EXTRA_HELP="	status	View pid and service status"
+USE_PROCD=1
 
+SERVICE_USER=network
+SERVICE_UID=101
+SERVICE_GROUP=network
+SERVICE_GID=101
 
-boot() {
-	# Set/edit this before starting service !!!!!
-	WRT_SPOOL=/var/spool
+start_service() {
+	# Set/edit this before starting service !!!
+	CFGFILE=/etc/smsd.conf
 
-	echo "Creating minimum spool directories"
-	mkdir -p $WRT_SPOOL
-	mkdir -p $WRT_SPOOL/sms
-	mkdir -p $WRT_SPOOL/sms/incoming
-	mkdir -p $WRT_SPOOL/sms/outgoing
-	mkdir -p $WRT_SPOOL/sms/checked
+	user_exists ${SERVICE_USER} ${SERVICE_UID} || user_add ${SERVICE_USER} ${SERVICE_UID} ${SERVICE_GID} /tmp
+	group_exists ${SERVICE_GROUP} ${SERVICE_GID} || group_add ${SERVICE_GROUP} ${SERVICE_GID}
 
-	start
-}
+	for CFG in checked failed incoming outgoing phonecalls report saved sent stats; do
+		LINE=$(grep -o "^${CFG} *= */.*\$" "${CFGFILE}")
+		[ $? -eq 0 -a -n "${LINE}" ] && {
+			DIR=$(echo "${LINE}" | sed "s/^${CFG} *= *\\(.*\\)\$/\\1/")
+			[ -d "${DIR}" ] || {
+				mkdir -m 0755 -p "${DIR}"
+				chmod 0770 "${DIR}"
+				chown "${SERVICE_UID}:${SERVICE_GID}" "${DIR}"
+			}
+		}
+	done
 
-start() {
-	echo "Starting SMS Daemon..."
-	sleep 5
-	/usr/bin/smsd
-}
+	for CFG in infofile pidfile; do
+		LINE=$(grep -o "^${CFG} *= */.*\$" "${CFGFILE}")
+		[ $? -eq 0 -a -n "${LINE}" ] && {
+			FILE=$(echo "${LINE}" | sed "s/^${CFG} *= *\\(.*\\)\$/\\1/")
+			[ -f "${FILE}" ] || {
+				touch "${FILE}"
+				chmod 0660 "${FILE}"
+				chown "${SERVICE_UID}:${SERVICE_GID}" "${FILE}"
+			}
+		}
+	done
 
-stop() {
-	echo "Stopping SMS Daemon:"
-	echo "wait 5 sec..."
-	killall smsd
-	sleep 5
-}
-
-restart() {
-	stop
-	start
-}
-
-status() {
-	PIDFILE=/var/run/smsd.pid
-	PID=$(cat $PIDFILE)
-
-	test -e $PIDFILE
-	if [ $? == 0 ]; then
-		echo "Smsd running! pid $PID"
-	else
-		echo "Smsd not running !!!"
-	fi
+	procd_open_instance
+	procd_set_param command /usr/bin/smsd "-c${CFGFILE}" -t "-u${SERVICE_USER}" "-g${SERVICE_GROUP}"
+	procd_set_param env \
+		LD_LIBRARY_PATH=/lib:/usr/lib:/lib:/usr/lib \
+		PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+	procd_close_instance
 }
