@@ -45,7 +45,7 @@ start_service() {
 	procd_open_instance
 	procd_set_param command /usr/bin/smsd "-c${CFGFILE}" -t "-u${SERVICE_USER}" "-g${SERVICE_GROUP}"
 	procd_set_param env \
-		LD_LIBRARY_PATH=/lib:/usr/lib:/lib:/usr/lib \
+		LD_LIBRARY_PATH=/lib:/usr/lib \
 		PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 	procd_close_instance
 }
