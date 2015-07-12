@@ -1,0 +1,22 @@
+--- a/MainLinux.cpp
++++ b/MainLinux.cpp
+@@ -181,7 +181,7 @@
+ 	/* Ignore childs dead. */
+ 
+ 	/* System V */
+-	signal(SIGCLD, SIG_IGN);
++	signal(SIGCHLD, SIG_IGN);
+ 
+ 	return 0;
+ }
+--- a/SysIncludeLinux.h
++++ b/SysIncludeLinux.h
+@@ -31,7 +31,7 @@
+ #include <sys/file.h>
+ #include <sys/ioctl.h>
+ #include <sys/sendfile.h>
+-#include <sys/poll.h>
++#include <poll.h>
+ #include <sys/mman.h>
+ #include <sys/vfs.h>
+ #include <sys/sysinfo.h>

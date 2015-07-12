@@ -27,7 +27,7 @@ define Package/smstools3
 	SECTION:=utils
 	CATEGORY:=Utilities
 	TITLE:=Sms Server Tools 3
-	DEPENDS:=+libiconv-full +iconv +kmod-usb-serial-wwan
+	DEPENDS:=+libiconv-full +iconv
 	URL:=http://smstools3.kekekasvi.com/
 endef
 
