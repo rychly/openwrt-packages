@@ -1,0 +1,21 @@
+CPPFLAGS=-I../include
+CFLAGS=-Wall -pedantic -std=c11 -Os
+
+OBJDIR=../../objects
+OBJECTS= $(addprefix $(OBJDIR)/, duktape_s.o exec_object_s.o main_function_s.o http_methods_s.o error_msgs_s.o)
+
+$(OBJDIR)/libesmska.a: $(OBJECTS)
+	$(AR) rcs $@ $^
+
+$(OBJDIR)/duktape_s.o: duktape.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@ -fstrict-aliasing -fomit-frame-pointer
+
+$(OBJDIR)/exec_object_s.o: exec_object.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@ -D_BSD_SOURCE
+
+$(OBJDIR)/error_msgs_s.o $(OBJDIR)/http_methods_s.o $(OBJDIR)/main_function_s.o:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/main_function_s.o: main_function.c
+$(OBJDIR)/http_methods_s.o: http_methods.c
+$(OBJDIR)/error_msgs_s.o: error_msgs.c

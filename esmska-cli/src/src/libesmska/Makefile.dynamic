@@ -1,0 +1,22 @@
+CPPFLAGS+=-I../include
+CFLAGS+=-Wall -pedantic -std=c11 -Os
+LDFLAGS+=-lm -lcurl
+
+OBJDIR=../../objects
+OBJECTS= $(addprefix $(OBJDIR)/, duktape_d.o exec_object_d.o main_function_d.o http_methods_d.o error_msgs_d.o)
+
+../../libesmska.so.1.0.0: $(OBJECTS)
+	$(CC) $(CPPFLAGS) -shared -Wl,-soname,libesmska.so.1 -o $@ $^ $(LDFLAGS)
+
+$(OBJDIR)/duktape_d.o: duktape.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c -fPIC $< -o $@ -fstrict-aliasing -fomit-frame-pointer
+
+$(OBJDIR)/exec_object_d.o: exec_object.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c -fPIC $< -o $@ -D_BSD_SOURCE
+
+$(OBJDIR)/error_msgs_d.o $(OBJDIR)/http_methods_d.o $(OBJDIR)/main_function_d.o:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c -fPIC $< -o $@
+
+$(OBJDIR)/error_msgs_d.o: error_msgs.c
+$(OBJDIR)/http_methods_d.o: http_methods.c
+$(OBJDIR)/main_function_d.o: main_function.c

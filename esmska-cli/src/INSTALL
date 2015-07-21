@@ -1,0 +1,68 @@
+                       esmska-cli & esmskad
+An application sending SMS messages via web gateways (CLI version)
+   Copyright (c) 2015 by Dominik Marton <sino.include@gmail.com>
+###################################################################
+
+Building options:
+
+make cli
+    Creates esmska-cli console application
+
+make service
+    Creates esmska-cli, esmskad daemon and libesmska.so library
+
+make
+    Same as 'make service'
+
+The CC variable is available.
+
+===================================================================
+
+Feature options for esmskad:
+
+There are 3 optional features to choose from while building
+esmskad. To enable them, assign any of these separated by a space,
+to the OPTIONS variable.
+
+-D_SUPER_SERVER_DAEMON
+    Transforms the classic daemon into one that can be under
+    the management of a super-server daemon such as inetd
+    or systemd.
+
+-D_REQUEST_CHECK_SOURCE
+    Enables request checking whether it's a valid HTTP request
+    (containing "\r\n\r\n" to separate header and body). When these
+    CRLF characters are not preceding the body, it will lead
+    to service failure.
+
+-D_CHECK_JSON
+    Enables JSON checking in the request body whether it contains
+    required attributes (GATEWAY, NUMBER, TEXT). If any of these
+    is missing while this option is disabled, the running service
+    process will fail.
+
+Example:
+    make service OPTIONS="-D_CHECK_JSON -D_SUPER_SERVER_DAEMON"
+
+===================================================================
+
+Installation instructions:
+
+Type 'make install' to copy the built files into their respective
+directories.
+
+esmska-cli & esmskad ....... /usr/bin
+libesmska.so.1.0.0 ......... /lib
+libesmska.so.1 symlink ..... /lib
+
+The installation process will create a directory in /usr/share
+called esmska, where the user is supposed to put the JavaScript
+gateway modules from the original esmska implementation
+<https://code.google.com/p/esmska/>.
+
+===================================================================
+
+Uninstallation instructions:
+
+Type 'make uninstall' to completely remove the library, all binaries
+and the /usr/share/esmska directory along with its modules.
