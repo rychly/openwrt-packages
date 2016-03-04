@@ -27,7 +27,7 @@ define Package/smstools3
 	SECTION:=utils
 	CATEGORY:=Utilities
 	TITLE:=Sms Server Tools 3
-	DEPENDS:=+libiconv-full +iconv
+	DEPENDS:=+libiconv-full +iconv +mm
 	URL:=http://smstools3.kekekasvi.com/
 endef
 
@@ -36,6 +36,16 @@ define Package/smstools3/description
 	short messages through GSM modems and mobile phones.
 	Thanks to z-wer for OpenWRT Makefile and patches at
 	http://smstools3.kekekasvi.com/topic.php?post=4582#post4582
+endef
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	sed -i -e 's/^\(.*-D NOSTATS.*\)$$$$/#\1/' \
+	-e 's/\(`mm-config[^`]*\)--cflags\([^`]*`\)/\1\2/g' \
+	-e 's/\(`mm-config[^`]*\)--ldflags\([^`]*`\)/\1\2/g' \
+	-e 's/`mm-config *\(--libs\|--all\) *`/-lmm/g' \
+	-e 's/`mm-config *`//g' \
+	$(PKG_BUILD_DIR)/src/Makefile
 endef
 
 define Build/Compile
