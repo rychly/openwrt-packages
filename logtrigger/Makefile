@@ -17,7 +17,7 @@ PKG_VERSION:=1.04
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://logtrigger.googlecode.com/files/
+PKG_SOURCE_URL:=https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/logtrigger
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -27,7 +27,7 @@ define Package/logtrigger
 	SECTION:=utils
 	CATEGORY:=Utilities
 	TITLE:=Logtrigger read each logged event, extract information from it and publishes it in system variables that can be read by an external process.
-	URL:=https://code.google.com/p/logtrigger
+	URL:=https://code.google.com/archive/p/logtrigger/
 	DEPENDS:=+libuci
 	MAINTAINER:=Marek Rychly <marek.rychly@gmail.com>
 endef

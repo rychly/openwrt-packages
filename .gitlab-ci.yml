@@ -1,0 +1,40 @@
+# http://doc.gitlab.com/ce/ci/yaml/README.html
+# https://hub.docker.com/r/yhnw/openwrt-sdk/
+
+image: yhnw/openwrt-sdk
+
+variables:
+  PUBLIC: "${CI_PROJECT_DIR}/public"
+
+.link_packages: &link_packages
+  variables:
+    OPENWRT_DIR: "/home/openwrt/openwrt"
+    PKG_GROUP: "package/custom"
+    PKG_CUSTOM_DIR: "${OPENWRT_DIR}/${PKG_GROUP}"
+    USIGN_KEY: "${CI_PROJECT_DIR}/${CI_PROJECT_NAME}.key"
+    USIGN_PUB: "${CI_PROJECT_DIR}/${CI_PROJECT_NAME}.pub"
+  before_script:
+    - NUMCPUS=$(grep -c '^processor\s' /proc/cpuinfo)
+    - rm -vrf "${PKG_CUSTOM_DIR}"
+    - yes '' | make "--directory=${OPENWRT_DIR}" "--jobs=${NUMCPUS}" "--load-average=${NUMCPUS}" oldconfig || true
+    - ln -vs --relative --no-target-directory "${CI_PROJECT_DIR}" "${PKG_CUSTOM_DIR}"
+    - yes 'm' | make "--directory=${OPENWRT_DIR}" "--jobs=${NUMCPUS}" "--load-average=${NUMCPUS}" oldconfig || true
+
+stages:
+  - build
+
+pages:
+  stage: build
+  only:
+    - master
+  <<: *link_packages
+  script:
+    - mkdir -p "${PUBLIC}"
+    - cd "${OPENWRT_DIR}"
+    - bash -c "for I in ${PKG_GROUP}/*; do [[ -e \${I}/Makefile ]] || continue; make --jobs=${NUMCPUS} --load-average=${NUMCPUS} V=s MM_SHM_MAXSEGSIZE=67108864 \${I}/compile && cp -v ${OPENWRT_DIR}/bin/*/packages/base/\${I##*/}_*.ipk ${PUBLIC} || exit \$?; done"
+    - make "--jobs=${NUMCPUS}" "--load-average=${NUMCPUS}" package/index && cp -v ${OPENWRT_DIR}/bin/*/packages/base/Packages* "${PUBLIC}"
+    - test -e "${USIGN_KEY}" && cp -v "${USIGN_PUB}" "${PUBLIC}" || ( staging_dir/host/bin/usign -G -s "${USIGN_KEY}" -p "${USIGN_PUB}" && cp -v "${USIGN_KEY}" "${USIGN_PUB}" "${PUBLIC}" )
+    - staging_dir/host/bin/usign -S -m "${PUBLIC}/Packages" -s "${USIGN_KEY}" -x "${PUBLIC}/Packages.sig"
+  artifacts:
+    paths:
+      - ${PUBLIC}
