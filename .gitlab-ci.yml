@@ -1,24 +1,33 @@
 # http://doc.gitlab.com/ce/ci/yaml/README.html
 # https://hub.docker.com/r/yhnw/openwrt-sdk/
+# https://hub.docker.com/_/gcc/
 
-image: yhnw/openwrt-sdk
+image: gcc:latest
 
 variables:
   PUBLIC: "${CI_PROJECT_DIR}/public"
 
-.link_packages: &link_packages
+.openwrt_sdk: &openwrt_sdk
   variables:
-    OPENWRT_DIR: "/home/openwrt/openwrt"
+    SDK_URL: "https://downloads.openwrt.org/snapshots/trunk/ar71xx/generic/OpenWrt-SDK-ar71xx-generic_gcc-5.3.0_musl-1.1.16.Linux-x86_64.tar.bz2"
+    SDK_SUFFIX: ".tar.bz2"
+    OPENWRT_DIR: "../openwrt"
     PKG_GROUP: "package/custom"
     PKG_CUSTOM_DIR: "${OPENWRT_DIR}/${PKG_GROUP}"
     USIGN_KEY: "${CI_PROJECT_DIR}/${CI_PROJECT_NAME}.key"
     USIGN_PUB: "${CI_PROJECT_DIR}/${CI_PROJECT_NAME}.pub"
   before_script:
+    - apt-get --quiet update --yes
+    - apt-get --quiet install --yes bzip2 gcc g++ libncurses5-dev make python subversion wget zlib1g-dev ccache gawk git-core groff-base rsync sudo unzip
+    - rm -rf "${OPENWRT_DIR}" || true
+    - wget --quiet --output-document=- "${SDK_URL}" | tar --extract --bzip2 -C .. && mv "../$(basename ${SDK_URL} ${SDK_SUFFIX})" "${OPENWRT_DIR}" && echo "OpenWrt SDK downloaded and extracted"
+    - ${OPENWRT_DIR}/scripts/feeds update -a
+    - ${OPENWRT_DIR}/scripts/feeds install libcurl libstdcpp kmod-usb-serial-ftdi kmod-tun libopenssl libpthread uclibcxx libiconv-full iconv libuci dnscrypt-proxy libsodium dnscrypt-proxy-resolvers
+    - ln -s ../feeds/base/package/utils ${OPENWRT_DIR}/package/utils && echo "Fixed https://dev.openwrt.org/ticket/18552"
     - NUMCPUS=$(grep -c '^processor\s' /proc/cpuinfo)
-    - rm -vrf "${PKG_CUSTOM_DIR}"
-    - yes '' | make "--directory=${OPENWRT_DIR}" "--jobs=${NUMCPUS}" "--load-average=${NUMCPUS}" oldconfig || true
+    - MAKEOPTS="--directory=${OPENWRT_DIR} --jobs=${NUMCPUS} --load-average=${NUMCPUS} V=s MM_SHM_MAXSEGSIZE=67108864"
+    - rm -rf "${PKG_CUSTOM_DIR}" || true
     - ln -vs --relative --no-target-directory "${CI_PROJECT_DIR}" "${PKG_CUSTOM_DIR}"
-    - yes 'm' | make "--directory=${OPENWRT_DIR}" "--jobs=${NUMCPUS}" "--load-average=${NUMCPUS}" oldconfig || true
 
 stages:
   - build
@@ -27,14 +36,17 @@ pages:
   stage: build
   only:
     - master
-  <<: *link_packages
+  <<: *openwrt_sdk
   script:
-    - mkdir -p "${PUBLIC}"
     - cd "${OPENWRT_DIR}"
-    - bash -c "for I in ${PKG_GROUP}/*; do [[ -e \${I}/Makefile ]] || continue; make --jobs=${NUMCPUS} --load-average=${NUMCPUS} V=s MM_SHM_MAXSEGSIZE=67108864 \${I}/compile && cp -v ${OPENWRT_DIR}/bin/*/packages/base/\${I##*/}_*.ipk ${PUBLIC} || exit \$?; done"
-    - make "--jobs=${NUMCPUS}" "--load-average=${NUMCPUS}" package/index && cp -v ${OPENWRT_DIR}/bin/*/packages/base/Packages* "${PUBLIC}"
+    - ${CI_PROJECT_DIR}/build-upstream-packages.sh ${MAKEOPTS}
+    - bash -c "for I in ${PKG_GROUP}/*; do [[ -e \${I}/Makefile ]] || continue; make ${MAKEOPTS} \${I}/compile || exit \$?; done"
+    - make ${MAKEOPTS} package/index
+    - rm -rf "${PUBLIC}" || true
+    - mv -v ${OPENWRT_DIR}/bin/*/packages "${PUBLIC}"
     - test -e "${USIGN_KEY}" && cp -v "${USIGN_PUB}" "${PUBLIC}" || ( staging_dir/host/bin/usign -G -s "${USIGN_KEY}" -p "${USIGN_PUB}" && cp -v "${USIGN_KEY}" "${USIGN_PUB}" "${PUBLIC}" )
-    - staging_dir/host/bin/usign -S -m "${PUBLIC}/Packages" -s "${USIGN_KEY}" -x "${PUBLIC}/Packages.sig"
+    - find "${PUBLIC}" -type f -name Packages -exec staging_dir/host/bin/usign -S -m "{}" -s "${USIGN_KEY}" -x "{}.sig" \;
+    - echo "${SDK_URL}" > "${PUBLIC}/openwrt-sdk.txt"
   artifacts:
     paths:
       - ${PUBLIC}

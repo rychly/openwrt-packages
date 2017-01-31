@@ -25,11 +25,3 @@
 
  # Uncomment this to force smsd to run in terminal mode
  #CFLAGS += -D TERMINAL
-@@ -43,7 +43,7 @@
- 
- ifneq (,$(findstring SOLARIS,$(CFLAGS)))
- ifeq (,$(findstring DISABLE_INET_SOCKET,$(CFLAGS)))
--override LFLAGS += -lsocket -lnsl
-+	override LFLAGS += -lsocket -lnsl
- endif
- endif

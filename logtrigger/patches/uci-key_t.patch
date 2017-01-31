@@ -1,0 +1,11 @@
+--- a/uci.h	2017-02-01 21:42:14.371262042 +0100
++++ b/uci.h	2017-02-01 21:42:21.719269734 +0100
+@@ -4,6 +4,8 @@
+ 
+ #include "confreg.h"
+ 
++typedef int key_t;
++
+ void read_conf_uci(const char *name);
+ void do_logcheck(struct uci_section *s);
+ void do_logfiles(struct uci_section *s);
