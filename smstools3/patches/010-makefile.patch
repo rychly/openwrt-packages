@@ -2,26 +2,49 @@
 +++ b/src/Makefile
 @@ -1,7 +1,10 @@
  # In case of windows, use os_cygwin=yes setting in the configuration file (smsd.conf).
-
+ 
  # Select your setup size:
 -CFLAGS = -D NUMBER_OF_MODEMS=64
 +CFLAGS = -D NUMBER_OF_MODEMS=1
 +
 +CFLAGS += $(USER_CFLAGS)
 +LFLAGS += $(USER_LDFLAGS)
-
+ 
  # Uncomment for Solaris
  # CFLAGS += -D SOLARIS
-@@ -12,10 +15,10 @@
- CFLAGS += -D NOSTATS
-
- # Comment this out if iconv is not available on the system
--#CFLAGS += -D USE_ICONV
-+CFLAGS += -D USE_ICONV
-
- # Uncomment this is iconv is used and it's not included in libc:
--#LFLAGS += -liconv
-+LFLAGS += -liconv
-
- # Uncomment this to force smsd to run in terminal mode
- #CFLAGS += -D TERMINAL
+@@ -9,7 +12,7 @@
+ # CC=gcc
+ 
+ # Comment this out, to enable statistics
+-CFLAGS += -D NOSTATS
++#CFLAGS += -D NOSTATS
+ 
+ # Uncomment this to disable usage of inotify
+ #CFLAGS += -D DISABLE_INOTIFY
+@@ -30,7 +33,7 @@
+ #CFLAGS += -D DISABLE_NATIONAL_LANGUAGE_SHIFT_TABLES
+ 
+ # Uncomment this to support european national languages only
+-#CFLAGS += -D NATIONAL_LANGUAGES_EUROPEAN_ONLY
++CFLAGS += -D NATIONAL_LANGUAGES_EUROPEAN_ONLY
+ 
+ # Uncomment this to print national language shift tables (smsd does not do anything else)
+ #CFLAGS += -D PRINT_NATIONAL_LANGUAGE_SHIFT_TABLES
+@@ -47,7 +50,7 @@
+ CFLAGS += -D_FILE_OFFSET_BITS=64
+ 
+ # Use the following only on GNU/Linux and only if you need ps listing like "smsd: MAINPROCESS" and "smsd: GSM1"
+-# CFLAGS += -D USE_LINUX_PS_TRICK
++CFLAGS += -D USE_LINUX_PS_TRICK
+ 
+ all: smsd 
+ 
+@@ -62,7 +65,7 @@
+ ifneq (,$(findstring NOSTATS,$(CFLAGS)))
+ 	$(CC) $(CFLAGS) -o $@ $^ $(LFLAGS)
+ else 
+-	$(CC) `mm-config --cflags` $(CFLAGS) -o $@ $^ `mm-config --ldflags --libs` $(LFLAGS)
++	$(CC) $(CFLAGS) -o $@ $^ -lmm $(LFLAGS)
+ endif
+ 
+ clean:

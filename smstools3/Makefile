@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013 Marek Rychly
+# Copyright (C) 2018 Marek Rychly
 #
 # This is free software, licensed under the GNU General Public License v2.
 #
@@ -28,7 +28,7 @@ define Package/smstools3
 	SECTION:=utils
 	CATEGORY:=Utilities
 	TITLE:=Sms Server Tools 3
-	DEPENDS:=+libiconv-full +iconv +mm
+	DEPENDS:=+mm
 	URL:=http://smstools3.kekekasvi.com/
 endef
 
@@ -39,24 +39,12 @@ define Package/smstools3/description
 	http://smstools3.kekekasvi.com/topic.php?post=4582#post4582
 endef
 
-define Build/Prepare
-	$(call Build/Prepare/Default)
-	sed -i -e 's/^\(.*-D NOSTATS.*\)$$$$/#\1/' \
-	-e 's/\(`mm-config[^`]*\)--cflags\([^`]*`\)/\1\2/g' \
-	-e 's/\(`mm-config[^`]*\)--ldflags\([^`]*`\)/\1\2/g' \
-	-e 's/`mm-config *\(--libs\|--all\) *`/-lmm/g' \
-	-e 's/`mm-config *`//g' \
-	$(PKG_BUILD_DIR)/src/Makefile
-endef
-
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		CC=$(TARGET_CC) \
 		USER_CFLAGS='$(TARGET_CFLAGS) $(EXTRA_CFLAGS) \
-			$(TARGET_CPPFLAGS) $(EXTRA_CPPFLAGS) \
-			-I$(STAGING_DIR)/usr/lib/libiconv-full/include' \
-		USER_LDFLAGS='$(TARGET_LDFLAGS) $(EXTRA_LDFLAGS) \
-			-L$(STAGING_DIR)/usr/lib/libiconv-full/lib'
+			$(TARGET_CPPFLAGS) $(EXTRA_CPPFLAGS)' \
+		USER_LDFLAGS='$(TARGET_LDFLAGS) $(EXTRA_LDFLAGS)'
 endef
 
 define Package/smstools3/install

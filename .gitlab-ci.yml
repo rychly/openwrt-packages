@@ -9,10 +9,11 @@ before_script:
 build:
   stage: build
   script:
+    - export MAKEFLAGS="${MAKEFLAGS} -s"
     - /install-custom-feed-packages.sh
     - /reconfigure.sh
     - /make-custom-feed-packages.sh
-    - /make-index.sh
+    - /make-index.sh "${CI_PROJECT_DIR}/key-build"
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -22,8 +23,9 @@ build:
 pages:
   stage: deploy
   script:
-    - /generate-repository.sh public key-build key-build.pub
-    - ./generate-webpage.sh public > public/index.html
+    - mkdir -p ./public
+    - /generate-repository.sh "${CI_PROJECT_DIR}/public" "${CI_PROJECT_DIR}/key-build.pub"
+    - ./generate-webpage.sh "${CI_PROJECT_DIR}/public" > ./public/index.html
   artifacts:
     paths:
       - public
