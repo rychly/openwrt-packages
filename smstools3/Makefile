@@ -13,11 +13,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=smstools3
-PKG_VERSION:=3.1.16beta
+PKG_VERSION:=3.1.21
 PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://smstools3.kekekasvi.com/packages
+PKG_HASH:=a26ba4c02b16f6cf13177bffca6c9230dc5fefaeba8e3030cd4e4905f6a92084
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 

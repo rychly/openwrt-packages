@@ -21,6 +21,7 @@ PV_MIN:=11.2
 
 PKG_SOURCE:=$(PKG_NAME)_$(PV_MAJ).orig.tar.gz
 PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/k/konwert/
+PKG_HASH:=152d4ba63e61949502f3d3305a700308cf938118d232834c67365acbcba32d32
 # and patches in
 # $(PKG_SOURCE_URL)$(PKG_NAME)_$(PV_MAJ)-$(PV_MIN).diff.gz
 

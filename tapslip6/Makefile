@@ -13,11 +13,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tapslip6
-PKG_VERSION:=git944537fccf
+PKG_VERSION:=944537fccf5b4ca07e91aef92ba3001adfd2b22a
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME).c
-PKG_SOURCE_URL:=https://github.com/contiki-os/contiki/raw/master/tools/stm32w
+PKG_SOURCE_URL:=https://github.com/contiki-os/contiki/raw/$(PKG_VERSION)/tools/stm32w
+PKG_HASH:=301e995b69bb166992e0c240d8f2b4d7f6b023cfec1094edc60ae9d733745b6c
 UNPACK_CMD=cp -v $(DL_DIR)/$(PKG_SOURCE) $(1)/
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)

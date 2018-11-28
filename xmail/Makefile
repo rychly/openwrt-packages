@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xmail
 PKG_VERSION:=1.27
-PKG_RELEASE:=1
+PKG_RELEASE:=1b
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.xmailserver.org/
@@ -37,8 +37,11 @@ define Build/Compile
 	CFLAGS="$(TARGET_CFLAGS)" \
 	$(MAKE) -C $(PKG_BUILD_DIR) -f Makefile.lnx \
 		$(TARGET_CONFIGURE_OPTS) \
+		CPPFLAGS="$(TARGET_CPPFLAGS) -Wno-narrowing" \
+		LDFLAGS="$(TARGET_LDFLAGS) -lpthread -lssl -ldl -lcrypto" \
 		LD="$(TARGET_CXX)" \
 		all
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/xmail $(PKG_BUILD_DIR)/MailRoot
 	tar -cjf $(PKG_BUILD_DIR)/MailRoot.tar.bz2 -C $(PKG_BUILD_DIR)/MailRoot --exclude bin .
 endef
 

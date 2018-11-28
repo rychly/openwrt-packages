@@ -18,6 +18,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/logtrigger
+PKG_HASH:=5d4eafe758c3cf52f46b2b643b76025906ade5943b7789fafd6d1a6e2628c45d
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 

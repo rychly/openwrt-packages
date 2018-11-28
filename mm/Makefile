@@ -14,6 +14,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 # ftp.ossp.org returns often ERR_CONNECTION_REFUSED, use alternative site
 #PKG_SOURCE_URL:=ftp://ftp.ossp.org/pkg/lib/$(PKG_NAME)
 PKG_SOURCE_URL:=http://pkgs.fedoraproject.org/repo/pkgs/$(PKG_NAME)/$(PKG_SOURCE)/bdb34c6c14071364c8f69062d2e8c82b
+PKG_HASH:=8caddd1ee8d8c7790e4b7fedc9be15d4d76ea23f25b17687fc27218648325885
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
