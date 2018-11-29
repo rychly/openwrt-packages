@@ -3,13 +3,11 @@
 
 image: registry.gitlab.com/rychly-edu/docker/docker-openwrt-sdk:latest
 
-before_script:
-  - /add-custom-local-feed.sh "${CI_PROJECT_DIR}"
-
 build:
   stage: build
   script:
-    - export MAKEFLAGS="${MAKEFLAGS} -s"
+    - export MAKEFLAGS="${MAKEFLAGS} OUTPUT_DIR=${CI_PROJECT_DIR}/bin -s"
+    - /add-custom-local-feed.sh "${CI_PROJECT_DIR}"
     - /install-custom-feed-packages.sh
     - /reconfigure.sh
     - /make-custom-feed-packages.sh
@@ -18,13 +16,14 @@ build:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
     paths:
-      - ${SDK_HOME}/bin
+      - bin
 
 pages:
   stage: deploy
   script:
     - mkdir -p ./public
-    - /generate-repository.sh "${CI_PROJECT_DIR}/public" "${CI_PROJECT_DIR}/key-build.pub"
+    - /generate-repository.sh "${CI_PROJECT_DIR}/public" "${CI_PROJECT_DIR}/key-build.pub" "${CI_PROJECT_DIR}/bin"
+    - mv LICENSE ./public/
     - ./generate-webpage.sh "${CI_PROJECT_DIR}/public" > ./public/index.html
   artifacts:
     paths:
@@ -33,4 +32,4 @@ pages:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
     paths:
-      - ${SDK_HOME}/bin
+      - bin
