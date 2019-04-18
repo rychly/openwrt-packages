@@ -1,19 +1,23 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2014-2018 OpenWrt.org
 
-START=99
-STOP=99
+START=94
 
 USE_PROCD=1
 
-SERVICE_USER=network
-SERVICE_UID=101
+# If an unpriviledged user is selected, make sure
+# that /dev/ttyUSB? is writable by that user.
+SERVICE_USER=root
+SERVICE_UID=0
 SERVICE_GROUP=network
 SERVICE_GID=101
 
+DAEMON=/usr/bin/smsd
+
+# Set/edit this before starting service !!!
+CFGFILE=/etc/smsd.conf
+
 start_service() {
-	# Set/edit this before starting service !!!
-	CFGFILE=/etc/smsd.conf
 
 	user_exists ${SERVICE_USER} ${SERVICE_UID} || user_add ${SERVICE_USER} ${SERVICE_UID} ${SERVICE_GID} /tmp
 	group_exists ${SERVICE_GROUP} ${SERVICE_GID} || group_add ${SERVICE_GROUP} ${SERVICE_GID}
@@ -43,9 +47,12 @@ start_service() {
 	done
 
 	procd_open_instance
-	procd_set_param command /usr/bin/smsd "-c${CFGFILE}" -t "-u${SERVICE_USER}" "-g${SERVICE_GROUP}"
+	procd_set_param command ${DAEMON} "-c${CFGFILE}" -t "-u${SERVICE_USER}" "-g${SERVICE_GROUP}"
+	procd_set_param respawn
+	procd_set_param stdout 1
 	procd_set_param env \
 		LD_LIBRARY_PATH=/lib:/usr/lib \
 		PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 	procd_close_instance
 }
+

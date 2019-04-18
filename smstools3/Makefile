@@ -37,6 +37,8 @@ define Package/smstools3/description
 	short messages through GSM modems and mobile phones.
 	Thanks to z-wer for OpenWRT Makefile and patches at
 	http://smstools3.kekekasvi.com/topic.php?post=4582#post4582
+	Thank to Harald Geyer for OpenWRT distribution patches at
+	https://github.com/openwrt/packages/tree/master/utils/smstools3/patches
 endef
 
 define Build/Compile
@@ -49,12 +51,11 @@ endef
 
 define Package/smstools3/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/smsd $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/scripts/sendsms $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/smsd $(PKG_BUILD_DIR)/scripts/sendsms $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_DATA) -m 0755 ./files/sms3 $(1)/etc/init.d/
+	$(INSTALL_DATA) -m 0755 ./files/smstools3.init $(1)/etc/init.d/smstools3
 	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_DATA) ./files/smsd.conf $(1)/etc/
+	$(INSTALL_DATA) ./files/smstools3.conf $(1)/etc/smsd.conf
 endef
 
 $(eval $(call BuildPackage,smstools3))
