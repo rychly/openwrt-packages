@@ -191,6 +191,8 @@ start() {
 
 	export MAIL_ROOT
 
+	export LD_LIBRARY_PATH='/lib:/usr/lib'
+	export PATH='/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin'
 	service_start $DAEMON $args
 }
 
