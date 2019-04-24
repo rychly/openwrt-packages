@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2007-2013 OpenWrt.org
-# Copyright (C) 2015 Marek Rychly
+# Copyright (C) 2019 Marek Rychly
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xmail
 PKG_VERSION:=1.27
-PKG_RELEASE:=1b
+PKG_RELEASE:=1c
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.xmailserver.org/
@@ -20,17 +20,17 @@ include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/xmail
-  SECTION:=mail
-  CATEGORY:=Mail
-  DEPENDS:=+libopenssl +libpthread $(CXX_DEPENDS)
-  TITLE:=advanced, fast and reliable ESMTP/POP3 mail server
-  URL:=http://www.xmailserver.org/
+	SECTION:=mail
+	CATEGORY:=Mail
+	DEPENDS:=+libopenssl +libpthread $(CXX_DEPENDS)
+	TITLE:=advanced, fast and reliable ESMTP/POP3 mail server
+	URL:=http://www.xmailserver.org/
 endef
 
 define Package/xmail/description
- XMail is an Internet mail server featuring an SMTP, POP3 and finger server.
- It's incredibly easy to set up and has lots of features including :
- multiple domains, virtual users and spam protection.
+	XMail is an Internet mail server featuring an SMTP, POP3 and finger server.
+	It's incredibly easy to set up and has lots of features including :
+	multiple domains, virtual users and spam protection.
 endef
 
 define Build/Compile
@@ -42,7 +42,8 @@ define Build/Compile
 		LD="$(TARGET_CXX)" \
 		all
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/xmail $(PKG_BUILD_DIR)/MailRoot
-	tar -cjf $(PKG_BUILD_DIR)/MailRoot.tar.bz2 -C $(PKG_BUILD_DIR)/MailRoot --exclude bin .
+	tar -cjf $(PKG_BUILD_DIR)/MailRoot.tar.bz2 -C $(PKG_BUILD_DIR)/MailRoot \
+	--exclude bin --exclude domains/xmailserver.test --exclude xmail .
 endef
 
 define Package/xmail/install
@@ -57,7 +58,7 @@ define Package/xmail/install
 endef
 
 define Package/xmail/conffiles
-/etc/config/xmail
+	/etc/config/xmail
 endef
 
 $(eval $(call BuildPackage,xmail))
