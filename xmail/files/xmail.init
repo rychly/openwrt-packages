@@ -58,6 +58,9 @@ xmail() {
 	if ! [ -d "${mail_root}" ]; then
 		mkdir -p "${mail_root}"
 		bzcat /etc/MailRoot.tar.bz2 | tar -x -C "${mail_root}"
+		# get 2 bytes from the random file, print them as a 2-byte decimal and strip the offset and initial zeros if any
+		local MSG_ID=$(hexdump -n 2 -d /dev/urandom | sed -e '2,$d' -e 's/^[^ ]\+ \+0*//')
+		echo $((MSG_ID)) > "${mail_root}/message.id"
 		chown -R "${SERVICE_UID}:${SERVICE_GID}" "${mail_root}"
 	fi
 
@@ -182,7 +185,6 @@ start_service() {
 		LD_LIBRARY_PATH=/lib:/usr/lib \
 		PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 	procd_append_param limits core=10000 #stack=256 # stack limit disabled as it result into SIGSEGV
-	procd_set_param file /etc/config/xmail
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 	procd_set_param command /usr/bin/XMail
