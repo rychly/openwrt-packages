@@ -1,7 +1,8 @@
 # http://doc.gitlab.com/ce/ci/yaml/README.html
 # https://gitlab.com/rychly-edu/docker/docker-openwrt-sdk
 
-image: registry.gitlab.com/rychly-edu/docker/docker-openwrt-sdk:latest
+# Fixed OpenWrt version to rebuild on its version updates
+image: registry.gitlab.com/rychly-edu/docker/docker-openwrt-sdk:19.07.1-ath79
 
 build:
   stage: build
