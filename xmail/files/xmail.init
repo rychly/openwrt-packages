@@ -66,7 +66,10 @@ xmail() {
 
 	config_get mail_root_tabdir "${cfg}" mail_root_tabdir "${DEFAULT_MAIL_ROOT_TABDIR}"
 	if [ -d "${mail_root_tabdir}" ]; then
-		cp -af ${mail_root_tabdir}/* ${mail_root}/
+		cp -aLf ${mail_root_tabdir}/* ${mail_root}/
+		for I in ${mail_root}/domains/*/*; do
+			[ -d "${I}" ] && mkdir -p "${I}/mailbox" "${I}/Maildir/cur" "${I}/Maildir/new" "${I}/Maildir/tmp"
+		done
 		chown -R "${SERVICE_UID}:${SERVICE_GID}" "${mail_root}"
 	fi
 }
