@@ -2,7 +2,7 @@
 # https://gitlab.com/rychly-edu/docker/docker-openwrt-sdk
 
 # Fixed OpenWrt version to rebuild on its version updates
-image: registry.gitlab.com/rychly-edu/docker/docker-openwrt-sdk:19.07.2-ath79
+image: registry.gitlab.com/rychly-edu/docker/docker-openwrt-sdk:19.07.4-ath79
 
 build:
   stage: build
@@ -14,7 +14,7 @@ build:
     - /make-custom-feed-packages.sh
     - /make-index.sh "${CI_PROJECT_DIR}/key-build"
   cache:
-    key: "$CI_COMMIT_REF_NAME"
+    key: ${CI_COMMIT_REF_SLUG}
     policy: push
     paths:
       - bin
@@ -30,7 +30,7 @@ pages:
     paths:
       - public
   cache:
-    key: "$CI_COMMIT_REF_NAME"
+    key: ${CI_COMMIT_REF_SLUG}
     policy: pull
     paths:
       - bin
