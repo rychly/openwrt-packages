@@ -1,6 +1,6 @@
 # OpenWrt packages
 
-https://rychly.gitlab.io/openwrt-packages/
+https://rychly-edu.gitlab.io/openwrt-packages/
 
 Custom packages for OpenWrt (source code and builds).
 
